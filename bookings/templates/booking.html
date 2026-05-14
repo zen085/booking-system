@@ -1,0 +1,152 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .booking-wrapper {
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .booking-title {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        border-color: #28a745;
+        outline: none;
+    }
+
+    .errorlist {
+        color: red;
+        margin-top: 5px;
+        list-style: none;
+        padding: 0;
+        font-size: 14px;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 14px;
+        background: #28a745;
+        border: none;
+        color: white;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background: #218838;
+    }
+
+    .booking-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+    }
+
+    .booking-info p {
+        margin: 5px 0;
+        color: #555;
+    }
+</style>
+
+<div class="booking-wrapper">
+
+    <h2 class="booking-title">Complete Your Booking</h2>
+
+    <!-- SESSION DETAILS -->
+    <div class="booking-info">
+        <p><strong>Date:</strong> {{ session_date }}</p>
+        <p><strong>Time:</strong> {{ session_time }}</p>
+    </div>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <!-- NAME -->
+        <div class="form-group">
+            <label for="{{ form.name.id_for_label }}">Full Name</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+
+        <!-- EMAIL -->
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">Email Address</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+
+        <!-- PHONE -->
+        <div class="form-group">
+            <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+            {{ form.phone }}
+            {{ form.phone.errors }}
+        </div>
+
+        <!-- DATE -->
+        <div class="form-group">
+            <label for="{{ form.date.id_for_label }}">Booking Date</label>
+            {{ form.date }}
+            {{ form.date.errors }}
+        </div>
+
+        <!-- TIME -->
+        <div class="form-group">
+            <label for="{{ form.time.id_for_label }}">Booking Time</label>
+            {{ form.time }}
+            {{ form.time.errors }}
+        </div>
+
+        <!-- NOTES -->
+        <div class="form-group">
+            <label for="{{ form.notes.id_for_label }}">Additional Notes</label>
+            {{ form.notes }}
+            {{ form.notes.errors }}
+        </div>
+
+        <button type="submit" class="submit-btn">
+            Confirm Booking
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

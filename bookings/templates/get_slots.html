@@ -1,0 +1,256 @@
+
+
+{% extends "base.html" %}
+
+{% block title %}
+Available Slots
+{% endblock  %}
+
+{% block content %}
+
+<h1 class="mb-4">Check Available Slots</h1>
+
+<!-- Date Selection -->
+<div class="mb-3">
+    <input type="date" id="dateInput" class="form-control w-25 d-inline">
+
+    <button onclick="getSlots()" class="btn btn-primary ms-2">
+        Check
+    </button>
+</div>
+
+<!-- Hidden Selected Time -->
+<input type="hidden" id="selectedTime">
+<!-- hidden id -->
+<input type="hidden" id="service_id" value="{{ service_id }}">
+
+<!-- Slots Container -->
+<div id="slotsContainer" class="mt-4">
+    <p class="text-muted">Please select a date first</p>
+</div>
+
+{% csrf_token %}
+
+<!-- Continue Button -->
+<div class="mt-4">
+    <button id="continueBtn"
+            class="btn btn-success"
+            disabled>
+        Continue Booking
+    </button>
+</div>
+
+<style>
+    #slotsContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        max-width: 500px;
+    }
+
+    .slot-btn {
+        padding: 10px 15px;
+        border: 1px solid #0d6efd;
+        background-color: white;
+        color: #0d6efd;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .slot-btn:hover {
+        background-color: #0d6efd;
+        color: white;
+    }
+
+    .slot-btn.selected {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>
+
+<script>
+
+const BOOK_API_URL = "{% url 'bookings:api' %}";
+
+let SERVICE_ID = null;
+
+// GET COOKIE
+function getCookie(name) {
+    let cookieValue = null;
+
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+// RUN WHEN PAGE LOADS
+// document.addEventListener('DOMContentLoaded', function () {
+
+//     SERVICE_ID = document.getElementById('service_id').value;
+
+//     const continueBtn = document.getElementById('continueBtn');
+
+//     continueBtn.addEventListener('click', function () {
+
+//         const date = document.getElementById('dateInput').value;
+//         const time = document.getElementById('selectedTime').value;
+
+//         fetch("{% url 'bookings:save_slot' %}", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 "X-CSRFToken": csrftoken
+//             },
+//             body: JSON.stringify({
+//                 service_id: SERVICE_ID,
+//                 date: date,
+//                 time: time
+//             })
+//         })
+//         .then(res => res.json())
+//         .then(data => {
+//             if (data.success) {
+//                 window.location.href = "{% url 'bookings:book_service' %}";
+//             }
+//         });
+
+//     });
+
+// });
+
+// RUN WHEN PAGE LOADS
+document.addEventListener('DOMContentLoaded', function () {
+
+    const SERVICE_ID = document.getElementById('service_id').value;
+
+    const continueBtn = document.getElementById('continueBtn');
+
+    continueBtn.addEventListener('click', function () {
+
+        const date = document.getElementById('dateInput').value;
+        const time = document.getElementById('selectedTime').value;
+
+        // DEBUGGING INPUTS
+        console.log("Raw Inputs:");
+        console.log("SERVICE_ID:", SERVICE_ID);
+        console.log("Date:", date);
+        console.log("Time:", time);
+
+        const payload = {
+            service_id: SERVICE_ID,
+            date: date,
+            time: time
+        };
+
+        // DEBUGGING PAYLOAD
+        console.log("Payload being sent:");
+        console.log(payload);
+        console.log("JSON Payload:");
+        console.log(JSON.stringify(payload));
+
+        fetch("{% url 'bookings:save_slot' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            console.log("Raw Response:", res);
+            return res.json();
+        })
+        .then(data => {
+            console.log("Parsed Response Data:", data);
+
+            if (data.success) {
+                window.location.href = "{% url 'bookings:book_service' %}";
+            } else {
+                console.warn("Request failed:", data);
+            }
+        })
+        .catch(error => {
+            console.error("Fetch Error:", error);
+        });
+
+    });
+
+});
+
+
+// MUST BE GLOBAL (because onclick uses it)
+function getSlots() {
+
+    const date = document.getElementById('dateInput').value;
+    const container = document.getElementById('slotsContainer');
+    const continueBtn = document.getElementById('continueBtn');
+
+    continueBtn.disabled = true;
+
+    if (!date) {
+        container.innerHTML = "<p class='text-danger'>Please select a date first</p>";
+        return;
+    }
+
+    container.innerHTML = "<p class='text-primary'>Loading...</p>";
+
+    fetch(`${BOOK_API_URL}?date=${date}`)
+        .then(res => res.json())
+        .then(data => {
+
+            container.innerHTML = "";
+
+            if (!data.slots || data.slots.length === 0) {
+                container.innerHTML = "<p class='text-warning'>Can not book past dates.</p>";
+                return;
+            }
+
+            data.slots.forEach(slot => {
+
+                const btn = document.createElement("button");
+
+                btn.type = "button";
+                btn.className = "slot-btn";
+                btn.textContent = slot;
+
+                btn.onclick = function () {
+
+                    document.querySelectorAll('.slot-btn')
+                        .forEach(b => b.classList.remove('selected'));
+
+                    this.classList.add('selected');
+
+                    document.getElementById('selectedTime').value = slot;
+
+                    continueBtn.disabled = false;
+                };
+
+                container.appendChild(btn);
+            });
+
+        })
+        .catch(err => {
+            container.innerHTML = "<p class='text-danger'>Error loading slots</p>";
+            console.error(err);
+        });
+}
+
+</script>
+
+{% endblock  %}
